@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <link rel="apple-touch-icon" href="icon.png">
-<link rel="icon" href="icon.png">
+ <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff6f61">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>체험단 상황판 & 월말 절약 계산기 v1.3</title>
@@ -833,5 +835,10 @@
 
     render();
   </script>
+  <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
 </body>
 </html>
