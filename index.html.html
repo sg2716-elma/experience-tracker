@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>체험단 상황판 & 월말 절약 계산기 v1.3</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1e2430;
+      --muted: #667085;
+      --border: #e4e7ec;
+      --primary: #2563eb;
+      --primary-soft: #eff6ff;
+      --green: #059669;
+      --green-soft: #ecfdf5;
+      --amber: #d97706;
+      --amber-soft: #fffbeb;
+      --purple: #7c3aed;
+      --purple-soft: #f5f3ff;
+      --cyan: #0284c7;
+      --cyan-soft: #f0f9ff;
+      --red: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px 16px 60px;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    h1 { font-size: 1.35rem; margin: 0; }
+    .subtitle { font-size: 0.85rem; color: var(--muted); }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    button {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: #f1f3f9; }
+    button.primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    button.primary:hover { background: #1d4ed8; }
+    button.danger { color: var(--red); }
+    button.toggle-on {
+      background: var(--amber-soft);
+      color: var(--amber);
+      border-color: #fcd34d;
+    }
+    button.paid-on {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: #6ee7b7;
+    }
+    button.unpaid-btn {
+      background: #fef2f2;
+      color: var(--red);
+      border-color: #fecaca;
+    }
+
+    .msg-banner {
+      display: none;
+      margin-bottom: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+    .msg-banner.ok { display: block; background: var(--green-soft); color: var(--green); border: 1px solid #a7f3d0; }
+    .msg-banner.warn { display: block; background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+    .stat-value { font-size: 1.45rem; font-weight: 800; }
+    .stat-value.money { color: var(--green); }
+    .stat-sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .panel-title { font-size: 0.95rem; font-weight: 700; margin: 0 0 10px; }
+    textarea, input, select {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: #fff;
+    }
+    textarea { min-height: 82px; resize: vertical; }
+    .parse-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      margin-bottom: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .hint { font-size: 0.78rem; color: var(--muted); }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .submit-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .tab {
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      background: var(--card);
+    }
+    .tab.active {
+      background: var(--text);
+      color: #fff;
+      border-color: var(--text);
+    }
+
+    .list { display: grid; gap: 10px; }
+    .item-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .item-main { flex: 1 1 280px; }
+    .item-top {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+    .badge {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .st-예약중 { background: var(--primary-soft); color: var(--primary); }
+    .st-물품\ 대기중 { background: var(--amber-soft); color: var(--amber); }
+    .st-포스팅 { background: var(--purple-soft); color: var(--purple); }
+    .st-리뷰\ 등록 { background: var(--cyan-soft); color: var(--cyan); }
+    .st-완료 { background: var(--green-soft); color: var(--green); }
+
+    .payback-badge {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #fef3c7;
+      color: #b45309;
+    }
+    .deposit-ok {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--green-soft);
+      color: var(--green);
+    }
+    .deposit-wait {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #fef2f2;
+      color: var(--red);
+    }
+
+    .dday {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: #f2f4f7;
+      color: #344054;
+    }
+    .dday.urgent { background: #fef2f2; color: var(--red); }
+    .store-name { font-weight: 700; font-size: 1rem; }
+    .service-desc { font-size: 0.88rem; color: #344054; }
+    .meta { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    .item-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .price-tag {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--green);
+      margin-right: 4px;
+    }
+    .empty {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>체험단 상황판 & 절약 계산기 <span style="font-size:0.85rem;color:#667085;">v1.3</span></h1>
+        <div class="subtitle">내 브라우저에만 저장되는 초경량 개인 도구 (데이터 주권 100%)</div>
+      </div>
+      <div class="toolbar">
+        <input type="month" id="monthFilter" style="width:auto;" title="조회 월 선택" />
+        <button type="button" onclick="exportJSON()">JSON 백업</button>
+        <button type="button" onclick="document.getElementById('importFile').click()">JSON 복원</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)" />
+      </div>
+    </header>
+
+    <div id="msgBanner" class="msg-banner"></div>
+
+    <section class="summary-grid">
+      <div class="stat-card">
+        <div class="stat-label" id="savedLabel">선택 월 확정 절약액 (완료 기준)</div>
+        <div class="stat-value money" id="completedMoney">0원</div>
+        <div class="stat-sub" id="expectedMoney">진행 중 포함 예정 절약액: 0원</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">진행 중인 체험단</div>
+        <div class="stat-value" id="activeCount">0건</div>
+        <div class="stat-sub" id="statusBreakdown">예약 0 · 대기 0 · 포스팅 0 · 리뷰 0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">마감 임박 / 페이백 미입금</div>
+        <div class="stat-value" id="urgentCount">0건</div>
+        <div class="stat-sub" id="unpaidSub">페이백 미입금: 0건</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">1. 당첨 알림 붙여넣기 (선택) → 자동 채우기</div>
+      <textarea id="rawNotice" placeholder="카톡이나 문자 당첨 알림을 그대로 붙여넣으세요.&#10;예: [선정안내] 캠페인: 맑은샘 코스메틱 / 제품명: 어성초 진정 크림 100ml(34,000원) / 마감: 11월 29일"></textarea>
+      <div class="parse-row">
+        <button type="button" onclick="parseNotice()">문구에서 자동 추출</button>
+        <button type="button" onclick="fillSample()">샘플 문구 테스트</button>
+        <span class="hint">* 추출 후 아래 칸에서 틀린 부분만 가볍게 수정하세요.</span>
+      </div>
+
+      <div class="panel-title">2. 항목 확인 및 등록</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>업체명 / 캠페인 *</label>
+          <input type="text" id="store" placeholder="예: 맑은샘 코스메틱" />
+        </div>
+        <div class="field">
+          <label>제공 가치 (원)</label>
+          <input type="number" id="price" placeholder="예: 34000" step="1000" />
+        </div>
+        <div class="field">
+          <label>제품명 / 제공 서비스</label>
+          <input type="text" id="service" placeholder="예: 어성초 진정 크림 100ml" />
+        </div>
+        <div class="field">
+          <label>마감일 *</label>
+          <input type="date" id="deadline" />
+        </div>
+        <div class="field">
+          <label>진행 상태</label>
+          <select id="status">
+            <option value="예약중">예약중</option>
+            <option value="물품 대기중">물품 대기중</option>
+            <option value="포스팅">포스팅</option>
+            <option value="리뷰 등록">리뷰 등록</option>
+            <option value="완료">완료</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>메모 (방문일/링크 등)</label>
+          <input type="text" id="memo" placeholder="예: 택배 발송 예정" />
+        </div>
+      </div>
+
+      <div class="submit-bar">
+        <button type="button" id="draftPaybackBtn" onclick="toggleDraftPayback()">페이백 체험단: 아니오</button>
+        <button type="button" class="primary" onclick="addItem()">상황판에 추가하기</button>
+      </div>
+    </section>
+
+    <div class="tabs" id="filterTabs">
+      <button type="button" class="tab active" data-filter="전체" onclick="setFilter('전체')">전체</button>
+      <button type="button" class="tab" data-filter="예약중" onclick="setFilter('예약중')">예약중</button>
+      <button type="button" class="tab" data-filter="물품 대기중" onclick="setFilter('물품 대기중')">물품 대기중</button>
+      <button type="button" class="tab" data-filter="포스팅" onclick="setFilter('포스팅')">포스팅</button>
+      <button type="button" class="tab" data-filter="리뷰 등록" onclick="setFilter('리뷰 등록')">리뷰 등록</button>
+      <button type="button" class="tab" data-filter="완료" onclick="setFilter('완료')">완료</button>
+    </div>
+
+    <section class="list" id="itemList"></section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "my_experience_tracker_v1_3";
+    const STATUS_ORDER = ["예약중", "물품 대기중", "포스팅", "리뷰 등록", "완료"];
+    let items = [];
+    try {
+      items = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      if (!Array.isArray(items)) items = [];
+    } catch {
+      items = [];
+    }
+    let currentFilter = "전체";
+    let draftIsPayback = false;
+
+    function getLocalDateStr(offsetDays = 0) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + offsetDays);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    const todayStr = getLocalDateStr(0);
+    const currentYM = todayStr.slice(0, 7);
+    document.getElementById("monthFilter").value = currentYM;
+    document.getElementById("deadline").value = getLocalDateStr(7);
+    document.getElementById("monthFilter").addEventListener("change", render);
+
+    if (items.length === 0) {
+      items = [
+        {
+          id: "sample-1",
+          store: "성수 브런치랩 (예시)",
+          price: 38000,
+          service: "2인 브런치 + 음료 2잔",
+          deadline: getLocalDateStr(5),
+          status: "예약중",
+          memo: "네이버 예약 확정 필요",
+          isPayback: false,
+          isDeposited: false
+        },
+        {
+          id: "sample-2",
+          store: "올리브 페이백 세럼 (예시)",
+          price: 32000,
+          service: "세럼 본품 구매 후 환급",
+          deadline: getLocalDateStr(2),
+          status: "리뷰 등록",
+          memo: "영수증·리뷰 링크 제출 대기",
+          isPayback: true,
+          isDeposited: false
+        },
+        {
+          id: "sample-3",
+          store: "더마 수분크림 (예시)",
+          price: 29000,
+          service: "본품 50ml 배송형",
+          deadline: todayStr,
+          status: "완료",
+          memo: "포스팅 및 리뷰 등록 완료",
+          isPayback: false,
+          isDeposited: false
+        }
+      ];
+      save();
+    }
+
+    function updateDraftPaybackBtn() {
+      const btn = document.getElementById("draftPaybackBtn");
+      if (draftIsPayback) {
+        btn.textContent = "페이백 체험단: 예 (클릭해 해제)";
+        btn.className = "toggle-on";
+      } else {
+        btn.textContent = "페이백 체험단: 아니오";
+        btn.className = "";
+      }
+    }
+
+    function toggleDraftPayback() {
+      draftIsPayback = !draftIsPayback;
+      updateDraftPaybackBtn();
+    }
+
+    function showBanner(text, type = "ok") {
+      const el = document.getElementById("msgBanner");
+      el.textContent = text;
+      el.className = `msg-banner ${type}`;
+    }
+
+    function save() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      } catch (e) {
+        showBanner("브라우저 저장소에 기록할 수 없습니다. 시크릿 모드나 저장 공간을 확인해 주세요.", "warn");
+      }
+    }
+
+    function fillSample() {
+      document.getElementById("rawNotice").value =
+        "[체험단 선정안내] 캠페인: 맑은샘 코스메틱\n제품명: 어성초 진정 크림 100ml(34,000원 상당)\n리뷰 마감일: 11월 29일까지";
+      showBanner("샘플 알림 문구를 넣었어요. [문구에서 자동 추출]을 눌러보세요.", "ok");
+    }
+
+    function stripNoiseWords(str) {
+      return str
+        .replace(/\[[^\]]*\]/g, " ")
+        .replace(/\([^)]*(?:원|만원|상당|필수|주의|참고)[^)]*\)/g, " ")
+        .replace(/^(?:캠페인\s*명?|업체\s*명?|브랜드\s*명?|상호\s*명?|매장\s*명?|제품\s*명?|상품\s*명?|메뉴\s*명?|제공\s*물품|제공\s*내역|제공\s*서비스|제공\s*혜택|제공|혜택|물품|상품|제품|메뉴|내역|내용)\s*[:：-]?\s*/i, "")
+        .replace(/(?:체험단|캠페인|당첨\s*안내|선정\s*안내|당첨|선정|모집|협찬|제공\s*안내|안내)\s*$/g, "")
+        .replace(/^[·•\-|>\s]+|[·•\-|>\s]+$/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
+
+    function extractLabeledValue(text, labels) {
+      const pattern = new RegExp(
+        `(?:${labels.join("|")})\\s*[:：\\-]?\\s*([^\\n|]+)`,
+        "i"
+      );
+      const match = text.match(pattern);
+      if (!match || !match[1]) return "";
+      // 같은 줄에 다른 레이블이 바로 이어지는 경우 그 앞에서 끊기
+      const cutAtNextLabel = match[1].split(
+        /(?=\s+(?:업체명?|상호명?|매장명?|브랜드|캠페인|제품명?|상품명?|메뉴|제공\s*물품|제공\s*내역|제공\s*서비스|제공|혜택|마감|기한|일정|금액|가격)\s*[:：])/i
+      )[0];
+      return stripNoiseWords(cutAtNextLabel);
+    }
+
+    function parseNotice() {
+      const text = document.getElementById("rawNotice").value.trim();
+      if (!text) {
+        return showBanner("먼저 알림 문구를 붙여넣어 주세요.", "warn");
+      }
+
+      // 1. 금액 추출
+      let price = "";
+      const manMatch = text.match(/(\d+(?:\.\d+)?)\s*만\s*원/);
+      const wonMatch = text.match(/(\d{1,3}(?:,\d{3})+|\d{4,})\s*원/);
+      if (manMatch) {
+        price = Math.round(parseFloat(manMatch[1]) * 10000);
+      } else if (wonMatch) {
+        price = parseInt(wonMatch[1].replace(/,/g, ""), 10);
+      }
+
+      // 2. 마감일 추출
+      let deadline = "";
+      const fullDate = text.match(/(20\d{2})[-./](\d{1,2})[-./](\d{1,2})/);
+      const krDate = text.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/);
+      const slashDate = text.match(/(?:마감|기한|등록)[^\d]{0,8}(\d{1,2})[-./](\d{1,2})/);
+
+      const baseYear = parseInt(currentYM.slice(0, 4), 10);
+      if (fullDate) {
+        deadline = `${fullDate[1]}-${fullDate[2].padStart(2, "0")}-${fullDate[3].padStart(2, "0")}`;
+      } else if (krDate) {
+        deadline = `${baseYear}-${krDate[1].padStart(2, "0")}-${krDate[2].padStart(2, "0")}`;
+      } else if (slashDate) {
+        deadline = `${baseYear}-${slashDate[1].padStart(2, "0")}-${slashDate[2].padStart(2, "0")}`;
+      }
+
+      // 3. 업체명 / 캠페인 추출
+      let store = extractLabeledValue(text, [
+        "업체\\s*명?",
+        "캠페인\\s*명?",
+        "브랜드\\s*명?",
+        "상호\\s*명?",
+        "매장\\s*명?"
+      ]);
+
+      const segments = text
+        .split(/\n+|\s*\/\s*|\s*\|\s*/)
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      if (!store) {
+        const candidateSeg = segments.find(seg => {
+          const cleaned = stripNoiseWords(seg);
+          if (!cleaned || cleaned.length < 2) return false;
+          return !/(마감|기한|등록|당첨되셨|선정되셨|입금|환급|계좌|블로그|인스타|릴스|숏츠|http|www\.)/i.test(cleaned);
+        });
+        if (candidateSeg) {
+          store = stripNoiseWords(candidateSeg).slice(0, 40);
+        }
+      }
+
+      // 4. 제품명 / 제공 서비스 추출
+      let service = extractLabeledValue(text, [
+        "제품\\s*명?",
+        "상품\\s*명?",
+        "메뉴\\s*명?",
+        "제공\\s*물품",
+        "제공\\s*내역",
+        "제공\\s*서비스",
+        "제공\\s*혜택",
+        "제공",
+        "혜택",
+        "물품",
+        "서비스"
+      ]);
+
+      if (!service) {
+        const scored = segments
+          .map(seg => stripNoiseWords(seg))
+          .filter(seg =>
+            seg.length >= 2 &&
+            seg !== store &&
+            !/(마감|기한|등록|당첨되셨|선정되셨|안내|유의|주의|필수|방문|예약|링크|http|www\.)/i.test(seg)
+          )
+          .map(seg => {
+            let score = 0;
+            if (/(식사권|이용권|시식권|체험권|상품권|쿠폰|세트|본품|박스|코스|패키지|크림|세럼|에센스|로션|토너|클렌저|샴푸|트리트먼트|밀키트|케어|마사지|시술|권\b|ml|g\b|인분|개입|장\b)/i.test(seg)) {
+              score += 3;
+            }
+            if (/\d/.test(seg)) score += 1;
+            if (seg.length <= 45) score += 1;
+            return { seg, score };
+          })
+          .sort((a, b) => b.score - a.score);
+
+        if (scored[0] && scored[0].score > 0) {
+          service = scored[0].seg.slice(0, 60);
+        } else if (scored[0]) {
+          service = scored[0].seg.slice(0, 60);
+        }
+      }
+
+      if (store) store = store.slice(0, 40);
+      if (service) service = service.slice(0, 60);
+
+      if (/페이백|환급|입금\s*예정|선결제/i.test(text)) {
+        draftIsPayback = true;
+        updateDraftPaybackBtn();
+      }
+
+      if (store) document.getElementById("store").value = store;
+      if (price) document.getElementById("price").value = price;
+      if (service) document.getElementById("service").value = service;
+      if (deadline) document.getElementById("deadline").value = deadline;
+
+      showBanner(
+        `추출 결과 — 캠페인/업체: ${store || "미감지"} · 제품/서비스: ${service || "미감지"} · 금액: ${price ? Number(price).toLocaleString() + "원" : "미감지"} · 마감: ${deadline || "미감지"}`,
+        "ok"
+      );
+    }
+
+    function addItem() {
+      const store = document.getElementById("store").value.trim();
+      const priceRaw = document.getElementById("price").value;
+      const price = priceRaw === "" ? 0 : (parseInt(priceRaw, 10) || 0);
+      const service = document.getElementById("service").value.trim();
+      const deadline = document.getElementById("deadline").value;
+      const status = document.getElementById("status").value;
+      const memo = document.getElementById("memo").value.trim();
+
+      if (!store) return showBanner("업체명 / 캠페인을 입력해 주세요.", "warn");
+      if (!deadline) return showBanner("마감일을 선택해 주세요.", "warn");
+
+      items.unshift({
+        id: "exp-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+        store,
+        price,
+        service,
+        deadline,
+        status,
+        memo,
+        isPayback: draftIsPayback,
+        isDeposited: false
+      });
+
+      save();
+
+      const itemYM = deadline.slice(0, 7);
+      document.getElementById("monthFilter").value = itemYM;
+
+      if (currentFilter !== "전체" && currentFilter !== status) {
+        setFilter("전체");
+      } else {
+        render();
+      }
+
+      ["rawNotice", "store", "price", "service", "memo"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+      draftIsPayback = false;
+      updateDraftPaybackBtn();
+      showBanner(`'${store}' 항목을 상황판(${itemYM})에 추가했습니다.`, "ok");
+    }
+
+    function changeStatus(id, newStatus) {
+      const target = items.find(i => i.id === id);
+      if (target) {
+        target.status = newStatus;
+        save();
+        render();
+      }
+    }
+
+    function toggleItemPayback(id) {
+      const target = items.find(i => i.id === id);
+      if (!target) return;
+      target.isPayback = !target.isPayback;
+      if (!target.isPayback) target.isDeposited = false;
+      save();
+      render();
+    }
+
+    function toggleDeposit(id) {
+      const target = items.find(i => i.id === id);
+      if (!target || !target.isPayback) return;
+      target.isDeposited = !target.isDeposited;
+      save();
+      render();
+    }
+
+    function deleteItem(id) {
+      items = items.filter(i => i.id !== id);
+      save();
+      render();
+      showBanner("항목을 삭제했습니다.", "ok");
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll(".tab").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.filter === filter);
+      });
+      render();
+    }
+
+    function getDdayInfo(deadlineStr, status) {
+      if (status === "완료") return { text: "완료됨", urgent: false };
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const target = new Date(deadlineStr + "T00:00:00");
+      if (isNaN(target.getTime())) return { text: "날짜확인", urgent: false };
+      const diff = Math.round((target - today) / 86400000);
+      if (diff < 0) return { text: `D+${Math.abs(diff)} 지남`, urgent: true };
+      if (diff === 0) return { text: "D-Day 오늘", urgent: true };
+      return { text: `D-${diff}`, urgent: diff <= 3 };
+    }
+
+    function render() {
+      const selectedMonth = document.getElementById("monthFilter").value || currentYM;
+      const monthItems = items.filter(i => (i.deadline || "").startsWith(selectedMonth));
+
+      const completedSum = monthItems
+        .filter(i => i.status === "완료")
+        .reduce((sum, i) => sum + (Number(i.price) || 0), 0);
+      const totalMonthSum = monthItems
+        .reduce((sum, i) => sum + (Number(i.price) || 0), 0);
+
+      const cReserve = monthItems.filter(i => i.status === "예약중").length;
+      const cWait = monthItems.filter(i => i.status === "물품 대기중").length;
+      const cPost = monthItems.filter(i => i.status === "포스팅").length;
+      const cReview = monthItems.filter(i => i.status === "리뷰 등록").length;
+
+      const urgent = monthItems.filter(i => {
+        if (i.status === "완료") return false;
+        return getDdayInfo(i.deadline, i.status).urgent;
+      }).length;
+
+      const unpaidPaybackCount = monthItems.filter(i => i.isPayback && !i.isDeposited).length;
+
+      document.getElementById("savedLabel").textContent = `${selectedMonth} 확정 절약액 (완료 기준)`;
+      document.getElementById("completedMoney").textContent = `${completedSum.toLocaleString()}원`;
+      document.getElementById("expectedMoney").textContent = `진행 중 포함 예정 절약액: ${totalMonthSum.toLocaleString()}원`;
+      document.getElementById("activeCount").textContent = `${cReserve + cWait + cPost + cReview}건`;
+      document.getElementById("statusBreakdown").textContent = `예약 ${cReserve} · 대기 ${cWait} · 포스팅 ${cPost} · 리뷰 ${cReview}`;
+      document.getElementById("urgentCount").textContent = `${urgent}건`;
+      document.getElementById("unpaidSub").textContent = `페이백 미입금: ${unpaidPaybackCount}건`;
+
+      const visible = monthItems
+        .filter(i => currentFilter === "전체" || i.status === currentFilter)
+        .sort((a, b) => (a.deadline || "").localeCompare(b.deadline || ""));
+
+      const listEl = document.getElementById("itemList");
+      if (visible.length === 0) {
+        listEl.innerHTML = `<div class="empty">${selectedMonth} (${currentFilter})에 해당하는 체험단 내역이 없습니다.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = visible.map(item => {
+        const dday = getDdayInfo(item.deadline, item.status);
+        const options = STATUS_ORDER.map(st =>
+          `<option value="${st}" ${item.status === st ? "selected" : ""}>${st}</option>`
+        ).join("");
+        const safeId = encodeURIComponent(item.id);
+
+        const paybackBadges = item.isPayback
+          ? `<span class="payback-badge">페이백</span>` +
+            (item.isDeposited
+              ? `<span class="deposit-ok">입금 완료</span>`
+              : `<span class="deposit-wait">입금 대기</span>`)
+          : "";
+
+        const paybackButtons = `
+          <button type="button" class="${item.isPayback ? "toggle-on" : ""}" onclick="toggleItemPayback(decodeURIComponent('${safeId}'))">
+            ${item.isPayback ? "페이백 해제" : "페이백 표시"}
+          </button>
+          ${
+            item.isPayback
+              ? `<button type="button" class="${item.isDeposited ? "paid-on" : "unpaid-btn"}" onclick="toggleDeposit(decodeURIComponent('${safeId}'))">
+                   ${item.isDeposited ? "입금됨 ✓" : "입금 체크"}
+                 </button>`
+              : ""
+          }
+        `;
+
+        return `
+          <div class="item-card">
+            <div class="item-main">
+              <div class="item-top">
+                <span class="badge st-${escapeHtml(item.status)}">${escapeHtml(item.status)}</span>
+                ${paybackBadges}
+                <span class="dday ${dday.urgent ? "urgent" : ""}">${escapeHtml(dday.text)}</span>
+                <span class="store-name">${escapeHtml(item.store)}</span>
+              </div>
+              <div class="service-desc">제공: ${escapeHtml(item.service || "미입력")}</div>
+              <div class="meta">마감일: ${escapeHtml(item.deadline)}${item.memo ? " · " + escapeHtml(item.memo) : ""}</div>
+            </div>
+            <div class="item-actions">
+              <span class="price-tag">${(Number(item.price) || 0).toLocaleString()}원</span>
+              ${paybackButtons}
+              <select aria-label="상태 변경" onchange="changeStatus(decodeURIComponent('${safeId}'), this.value)" style="width:auto;">
+                ${options}
+              </select>
+              <button type="button" class="danger" onclick="deleteItem(decodeURIComponent('${safeId}'))">삭제</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify(items, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `체험단백업_${getLocalDateStr(0)}.json`;
+      a.click();
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!Array.isArray(parsed)) throw new Error();
+          items = parsed;
+          save();
+          render();
+          showBanner("백업 데이터를 복원했습니다.", "ok");
+        } catch {
+          showBanner("올바른 JSON 백업 파일이 아닙니다.", "warn");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    render();
+  </script>
+</body>
+</html>
