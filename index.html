@@ -1,458 +1,844 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+ <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff6f61">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2563eb">
-  <link rel="icon" href="icon-192.png">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <title>견적서 작성기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>체험단 상황판 & 월말 절약 계산기 v1.3</title>
   <style>
     :root {
-      --bg: #f6f7fb; --card: #fff; --text: #1e2430; --muted: #667085;
-      --border: #e4e7ec; --primary: #2563eb; --primary-hover: #1d4ed8;
-      --green: #059669; --green-soft: #ecfdf5; --red: #dc2626;
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1e2430;
+      --muted: #667085;
+      --border: #e4e7ec;
+      --primary: #2563eb;
+      --primary-soft: #eff6ff;
+      --green: #059669;
+      --green-soft: #ecfdf5;
+      --amber: #d97706;
+      --amber-soft: #fffbeb;
+      --purple: #7c3aed;
+      --purple-soft: #f5f3ff;
+      --cyan: #0284c7;
+      --cyan-soft: #f0f9ff;
+      --red: #dc2626;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
-    .container { max-width: 960px; margin: 0 auto; padding: 20px 16px 64px; }
-    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
-    h1 { font-size: 1.35rem; margin: 0; }
-    .subtitle { font-size: .84rem; color: var(--muted); }
-    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    button { border: 1px solid var(--border); background: var(--card); color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: .84rem; font-weight: 600; cursor: pointer; }
-    button:hover { background: #f1f3f9; }
-    button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
-    button.primary:hover { background: var(--primary-hover); }
-    button.danger { color: var(--red); }
-    .banner { display: none; margin-bottom: 14px; padding: 10px 14px; border-radius: 10px; font-size: .86rem; font-weight: 600; background: var(--green-soft); color: var(--green); border: 1px solid #a7f3d0; }
-    .banner.show { display: block; }
-    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-    .panel-title { font-size: .95rem; font-weight: 700; margin: 0 0 12px; }
-    .panel-hint { font-size: .78rem; color: var(--muted); margin: -6px 0 12px; }
-    .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
-    .field label { display: block; font-size: .78rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
-    input, select, textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px; font-size: .9rem; font-family: inherit; background: #fff; }
-    textarea { min-height: 70px; resize: vertical; }
-    .table-wrap { overflow-x: auto; }
-    table.edit { width: 100%; border-collapse: collapse; min-width: 720px; }
-    table.edit th, table.edit td { padding: 8px 6px; border-bottom: 1px solid var(--border); text-align: left; font-size: .88rem; vertical-align: middle; }
-    table.edit th { font-size: .78rem; color: var(--muted); background: #f9fafb; }
-    .num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
-    .summary-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
-    .sum-item { background: #f9fafb; border-radius: 10px; padding: 12px 14px; }
-    .sum-label { font-size: .78rem; color: var(--muted); }
-    .sum-val { font-size: 1.25rem; font-weight: 800; margin-top: 2px; }
-    .sum-val.total { color: var(--primary); }
-    .stamp-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .stamp-row img { height: 40px; width: 40px; object-fit: contain; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
-
-    /* ===== 견적서 문서 (A4) ===== */
-    .preview-wrap { overflow-x: auto; padding: 4px 0 8px; }
-    #sheet {
-      width: 190mm; margin: 0 auto; background: #fff; color: #000;
-      border: 2px solid #000; padding: 0;
-      font-family: "Batang", "바탕", "Noto Serif KR", "Nanum Myeongjo", serif;
-      font-size: 12px; line-height: 1.4;
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
     }
-    #sheet * { box-sizing: border-box; }
-    .s-top { position: relative; height: 15mm; border-bottom: 1px solid #000; }
-    .s-no { position: absolute; left: 3mm; top: 2mm; font-size: 11px; font-style: italic; }
-    .s-no u { display: inline-block; min-width: 22mm; }
-    .s-title { text-align: center; font-size: 30px; font-weight: 700; letter-spacing: 14px; padding-left: 14px; padding-top: 3.5mm; }
-    .s-title span { border-bottom: 4px double #000; padding: 0 4px 1px; }
-    .s-head { display: flex; border-bottom: 1px solid #000; }
-    .s-left { flex: 1; padding: 3mm 3mm 2mm; display: flex; flex-direction: column; justify-content: space-between; min-height: 38mm; }
-    .s-date { font-size: 13px; margin-bottom: 4mm; }
-    .s-client { border-bottom: 1px solid #000; padding: 1mm 0; font-size: 15px; font-weight: 700; display: flex; justify-content: space-between; gap: 6px; min-height: 7mm; }
-    .s-client em { font-style: normal; font-size: 13px; white-space: nowrap; }
-    .s-proj { border-bottom: 1px solid #000; padding: 1mm 0; font-size: 12px; min-height: 6.5mm; margin-top: 3mm; }
-    .s-greet { font-size: 12px; margin-top: 3mm; }
-    table.sup { width: 94mm; border-collapse: collapse; border-left: 1px solid #000; table-layout: fixed; }
-    table.sup td { border: 1px solid #000; border-top: 0; border-right: 0; padding: 0 1.5mm; height: 7.4mm; font-size: 12px; vertical-align: middle; overflow: hidden; }
-    table.sup tr:last-child td { border-bottom: 0; }
-    table.sup td.lb { background: #e6e6e6; text-align: center; padding: 0; letter-spacing: 1px; white-space: nowrap; }
-    table.sup td.vert { width: 7mm; background: #e6e6e6; text-align: center; padding: 0; line-height: 1.7; }
-    table.sup td.val { background: #f1f1f1; }
-    table.sup td.stampcell { position: relative; }
-    .stampimg { position: absolute; right: 1mm; top: 50%; transform: translateY(-50%); height: 11mm; width: 11mm; object-fit: contain; }
-    .stamptxt { position: absolute; right: 2mm; top: 50%; transform: translateY(-50%); color: #bbb; font-size: 12px; }
-    .s-total { display: flex; align-items: center; border-bottom: 1px solid #000; min-height: 13mm; padding: 1.5mm 3mm; }
-    .s-total .l { width: 38mm; font-size: 15px; font-weight: 700; letter-spacing: 2px; }
-    .s-total .l small { display: block; font-size: 10px; font-weight: 400; letter-spacing: 0; }
-    .s-total .r { flex: 1; text-align: center; font-size: 16px; font-weight: 700; }
-    table.items { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    table.items th, table.items td { border: 1px solid #000; border-top: 0; padding: 0 1.5mm; height: 8mm; font-size: 14px; overflow: hidden; }
-    table.items th:first-child, table.items td:first-child { border-left: 0; }
-    table.items th:last-child, table.items td:last-child { border-right: 0; }
-    table.items th { font-weight: 400; background: #e6e6e6; text-align: center; letter-spacing: 2px; height: 7mm; }
-    table.items td.r { text-align: right; font-variant-numeric: tabular-nums; }
-    table.items td.c { text-align: center; }
-    table.items td { white-space: nowrap; text-overflow: ellipsis; }
-    table.items tr.sum td { background: #e6e6e6; border-bottom: 0; font-weight: 700; }
-    .s-note { border-top: 1px solid #000; padding: 2mm 3mm; font-size: 12px; white-space: pre-wrap; min-height: 12mm; }
-    .s-note b { font-weight: 700; }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px 16px 60px;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    h1 { font-size: 1.35rem; margin: 0; }
+    .subtitle { font-size: 0.85rem; color: var(--muted); }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    button {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: #f1f3f9; }
+    button.primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    button.primary:hover { background: #1d4ed8; }
+    button.danger { color: var(--red); }
+    button.toggle-on {
+      background: var(--amber-soft);
+      color: var(--amber);
+      border-color: #fcd34d;
+    }
+    button.paid-on {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: #6ee7b7;
+    }
+    button.unpaid-btn {
+      background: #fef2f2;
+      color: var(--red);
+      border-color: #fecaca;
+    }
 
-    @page { size: A4 portrait; margin: 10mm; }
-    @media print {
-      body { background: #fff; }
-      .no-print { display: none !important; }
-      .container { max-width: none; padding: 0; }
-      .preview-wrap { overflow: visible; padding: 0; }
-      #sheet { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .msg-banner {
+      display: none;
+      margin-bottom: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+    .msg-banner.ok { display: block; background: var(--green-soft); color: var(--green); border: 1px solid #a7f3d0; }
+    .msg-banner.warn { display: block; background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+    .stat-value { font-size: 1.45rem; font-weight: 800; }
+    .stat-value.money { color: var(--green); }
+    .stat-sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .panel-title { font-size: 0.95rem; font-weight: 700; margin: 0 0 10px; }
+    textarea, input, select {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: #fff;
+    }
+    textarea { min-height: 82px; resize: vertical; }
+    .parse-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      margin-bottom: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .hint { font-size: 0.78rem; color: var(--muted); }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .submit-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .tab {
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      background: var(--card);
+    }
+    .tab.active {
+      background: var(--text);
+      color: #fff;
+      border-color: var(--text);
+    }
+
+    .list { display: grid; gap: 10px; }
+    .item-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .item-main { flex: 1 1 280px; }
+    .item-top {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+    .badge {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .st-예약중 { background: var(--primary-soft); color: var(--primary); }
+    .st-물품\ 대기중 { background: var(--amber-soft); color: var(--amber); }
+    .st-포스팅 { background: var(--purple-soft); color: var(--purple); }
+    .st-리뷰\ 등록 { background: var(--cyan-soft); color: var(--cyan); }
+    .st-완료 { background: var(--green-soft); color: var(--green); }
+
+    .payback-badge {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #fef3c7;
+      color: #b45309;
+    }
+    .deposit-ok {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--green-soft);
+      color: var(--green);
+    }
+    .deposit-wait {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #fef2f2;
+      color: var(--red);
+    }
+
+    .dday {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: #f2f4f7;
+      color: #344054;
+    }
+    .dday.urgent { background: #fef2f2; color: var(--red); }
+    .store-name { font-weight: 700; font-size: 1rem; }
+    .service-desc { font-size: 0.88rem; color: #344054; }
+    .meta { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    .item-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .price-tag {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--green);
+      margin-right: 4px;
+    }
+    .empty {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header class="no-print">
+    <header>
       <div>
-        <h1>견적서 작성기</h1>
-        <div class="subtitle">입력하면 아래 견적서 양식에 바로 반영됩니다 · 내 브라우저에 자동 저장</div>
+        <h1>체험단 상황판 & 절약 계산기 <span style="font-size:0.85rem;color:#667085;">v1.3</span></h1>
+        <div class="subtitle">내 브라우저에만 저장되는 초경량 개인 도구 (데이터 주권 100%)</div>
       </div>
       <div class="toolbar">
+        <input type="month" id="monthFilter" style="width:auto;" title="조회 월 선택" />
         <button type="button" onclick="exportJSON()">JSON 백업</button>
         <button type="button" onclick="document.getElementById('importFile').click()">JSON 복원</button>
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)" />
-        <button type="button" onclick="savePNG()">PNG 저장</button>
-        <button type="button" class="primary" onclick="window.print()">PDF 저장 / 인쇄</button>
       </div>
     </header>
 
-    <div id="banner" class="banner no-print"></div>
+    <div id="msgBanner" class="msg-banner"></div>
 
-    <section class="panel no-print">
-      <div class="panel-title">견적 기본 정보</div>
-      <div class="meta-grid">
-        <div class="field"><label>견적 번호 (No.)</label><input type="text" data-k="no" placeholder="예: 2026-001" /></div>
-        <div class="field"><label>견적일자</label><input type="date" data-k="quoteDate" /></div>
-        <div class="field"><label>수신 (거래처 / 고객명)</label><input type="text" data-k="clientName" placeholder="예: OO컴퍼니" /></div>
-        <div class="field"><label>건명 / 프로젝트명</label><input type="text" data-k="quoteTitle" placeholder="예: 홈페이지 리뉴얼" /></div>
+    <section class="summary-grid">
+      <div class="stat-card">
+        <div class="stat-label" id="savedLabel">선택 월 확정 절약액 (완료 기준)</div>
+        <div class="stat-value money" id="completedMoney">0원</div>
+        <div class="stat-sub" id="expectedMoney">진행 중 포함 예정 절약액: 0원</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">진행 중인 체험단</div>
+        <div class="stat-value" id="activeCount">0건</div>
+        <div class="stat-sub" id="statusBreakdown">예약 0 · 대기 0 · 포스팅 0 · 리뷰 0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">마감 임박 / 페이백 미입금</div>
+        <div class="stat-value" id="urgentCount">0건</div>
+        <div class="stat-sub" id="unpaidSub">페이백 미입금: 0건</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">1. 당첨 알림 붙여넣기 (선택) → 자동 채우기</div>
+      <textarea id="rawNotice" placeholder="카톡이나 문자 당첨 알림을 그대로 붙여넣으세요.&#10;예: [선정안내] 캠페인: 맑은샘 코스메틱 / 제품명: 어성초 진정 크림 100ml(34,000원) / 마감: 11월 29일"></textarea>
+      <div class="parse-row">
+        <button type="button" onclick="parseNotice()">문구에서 자동 추출</button>
+        <button type="button" onclick="fillSample()">샘플 문구 테스트</button>
+        <span class="hint">* 추출 후 아래 칸에서 틀린 부분만 가볍게 수정하세요.</span>
+      </div>
+
+      <div class="panel-title">2. 항목 확인 및 등록</div>
+      <div class="form-grid">
         <div class="field">
-          <label>부가세 적용</label>
-          <select data-k="vatMode">
-            <option value="add">부가세 10% 별도 계산</option>
-            <option value="none">부가세 없음 (면세/비과세)</option>
+          <label>업체명 / 캠페인 *</label>
+          <input type="text" id="store" placeholder="예: 맑은샘 코스메틱" />
+        </div>
+        <div class="field">
+          <label>제공 가치 (원)</label>
+          <input type="number" id="price" placeholder="예: 34000" step="1000" />
+        </div>
+        <div class="field">
+          <label>제품명 / 제공 서비스</label>
+          <input type="text" id="service" placeholder="예: 어성초 진정 크림 100ml" />
+        </div>
+        <div class="field">
+          <label>마감일 *</label>
+          <input type="date" id="deadline" />
+        </div>
+        <div class="field">
+          <label>진행 상태</label>
+          <select id="status">
+            <option value="예약중">예약중</option>
+            <option value="물품 대기중">물품 대기중</option>
+            <option value="포스팅">포스팅</option>
+            <option value="리뷰 등록">리뷰 등록</option>
+            <option value="완료">완료</option>
           </select>
         </div>
-      </div>
-    </section>
-
-    <section class="panel no-print">
-      <div class="panel-title">공급자 정보</div>
-      <div class="panel-hint">한 번 입력하면 저장되어 다음 견적서에도 그대로 사용됩니다.</div>
-      <div class="meta-grid">
-        <div class="field"><label>등록번호 (사업자등록번호)</label><input type="text" data-k="bizNo" placeholder="000-00-00000" /></div>
-        <div class="field"><label>상호 (법인명)</label><input type="text" data-k="compName" /></div>
-        <div class="field"><label>성명 (대표자)</label><input type="text" data-k="ceoName" /></div>
-        <div class="field"><label>사업장주소</label><input type="text" data-k="addr" /></div>
-        <div class="field"><label>업태</label><input type="text" data-k="bizType" /></div>
-        <div class="field"><label>종목</label><input type="text" data-k="bizItem" /></div>
-        <div class="field"><label>전화번호</label><input type="text" data-k="tel" placeholder="010-0000-0000" /></div>
         <div class="field">
-          <label>직인 이미지 (투명 PNG 권장)</label>
-          <div class="stamp-row">
-            <img id="stampThumb" alt="" style="display:none" />
-            <button type="button" onclick="document.getElementById('stampFile').click()">이미지 선택</button>
-            <button type="button" class="danger" id="stampDel" onclick="clearStamp()" style="display:none">삭제</button>
-            <input type="file" id="stampFile" accept="image/*" style="display:none" onchange="loadStamp(event)" />
-          </div>
+          <label>메모 (방문일/링크 등)</label>
+          <input type="text" id="memo" placeholder="예: 택배 발송 예정" />
         </div>
       </div>
-    </section>
 
-    <section class="panel no-print">
-      <div class="panel-title">견적 항목</div>
-      <div class="table-wrap">
-        <table class="edit">
-          <thead>
-            <tr>
-              <th style="width:28%;">품명</th>
-              <th style="width:12%;">규격</th>
-              <th style="width:10%; text-align:right;">수량</th>
-              <th style="width:15%; text-align:right;">단가 (원)</th>
-              <th style="width:15%; text-align:right;">공급가액</th>
-              <th style="width:14%;">비고</th>
-              <th style="width:6%;"></th>
-            </tr>
-          </thead>
-          <tbody id="itemRows"></tbody>
-        </table>
-      </div>
-      <div style="margin-top:10px;"><button type="button" class="primary" onclick="addRow()">+ 항목 추가</button></div>
-      <div class="summary-box">
-        <div class="sum-item"><div class="sum-label">공급가액 합계</div><div class="sum-val" id="subtotalDisplay">0원</div></div>
-        <div class="sum-item"><div class="sum-label">부가세 (VAT)</div><div class="sum-val" id="vatDisplay">0원</div></div>
-        <div class="sum-item"><div class="sum-label">합계금액</div><div class="sum-val total" id="totalDisplay">0원</div></div>
+      <div class="submit-bar">
+        <button type="button" id="draftPaybackBtn" onclick="toggleDraftPayback()">페이백 체험단: 아니오</button>
+        <button type="button" class="primary" onclick="addItem()">상황판에 추가하기</button>
       </div>
     </section>
 
-    <section class="panel no-print">
-      <div class="panel-title">비고 (결제 조건 · 유효기간 등)</div>
-      <textarea data-k="noteText" placeholder="예: 견적 유효기간은 발행일로부터 14일입니다. 계약금 50%, 잔금 완료 시 지급."></textarea>
-    </section>
+    <div class="tabs" id="filterTabs">
+      <button type="button" class="tab active" data-filter="전체" onclick="setFilter('전체')">전체</button>
+      <button type="button" class="tab" data-filter="예약중" onclick="setFilter('예약중')">예약중</button>
+      <button type="button" class="tab" data-filter="물품 대기중" onclick="setFilter('물품 대기중')">물품 대기중</button>
+      <button type="button" class="tab" data-filter="포스팅" onclick="setFilter('포스팅')">포스팅</button>
+      <button type="button" class="tab" data-filter="리뷰 등록" onclick="setFilter('리뷰 등록')">리뷰 등록</button>
+      <button type="button" class="tab" data-filter="완료" onclick="setFilter('완료')">완료</button>
+    </div>
 
-    <div class="no-print" style="font-size:.84rem; font-weight:700; margin:20px 0 8px;">견적서 미리보기 <span style="font-weight:400; color:var(--muted);">(이 모습 그대로 PDF/PNG로 저장됩니다)</span></div>
-    <div class="preview-wrap"><div id="sheet"></div></div>
+    <section class="list" id="itemList"></section>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
-    const STORAGE_KEY = "my_quote_builder_v1";
-    const MIN_ROWS = 20;
-    const FIELDS = ["no","quoteDate","clientName","quoteTitle","vatMode","bizNo","compName","ceoName","addr","bizType","bizItem","tel","noteText"];
-
-    function todayISO() {
-      const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-    }
-
-    let state = {
-      no: "", quoteDate: todayISO(), clientName: "", quoteTitle: "", vatMode: "add", noteText: "",
-      bizNo: "", compName: "", ceoName: "", addr: "", bizType: "", bizItem: "", tel: "", stamp: "",
-      rows: [{ name: "기본 작업 항목", spec: "식", qty: 1, price: 100000, note: "" }]
-    };
-
-    function normalizeRows(rows) {
-      return rows.map(r => ({
-        name: r.name || "", spec: r.spec ?? r.unit ?? "", qty: Number(r.qty) || 0,
-        price: Number(r.price) || 0, note: r.note || ""
-      }));
-    }
-
+    const STORAGE_KEY = "my_experience_tracker_v1_3";
+    const STATUS_ORDER = ["예약중", "물품 대기중", "포스팅", "리뷰 등록", "완료"];
+    let items = [];
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (saved && typeof saved === "object") {
-        state = { ...state, ...saved };
-        if (!state.compName && saved.senderName) state.compName = saved.senderName;
-        state.rows = Array.isArray(saved.rows) && saved.rows.length ? normalizeRows(saved.rows) : state.rows;
-      }
-    } catch {}
+      items = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      if (!Array.isArray(items)) items = [];
+    } catch {
+      items = [];
+    }
+    let currentFilter = "전체";
+    let draftIsPayback = false;
 
-    const $ = id => document.getElementById(id);
-    const won = n => Math.round(n).toLocaleString("ko-KR");
-    function esc(s) {
-      return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    function getLocalDateStr(offsetDays = 0) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + offsetDays);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
     }
 
-    function showBanner(msg) {
-      const el = $("banner"); el.textContent = msg; el.classList.add("show");
-      setTimeout(() => el.classList.remove("show"), 3000);
-    }
+    const todayStr = getLocalDateStr(0);
+    const currentYM = todayStr.slice(0, 7);
+    document.getElementById("monthFilter").value = currentYM;
+    document.getElementById("deadline").value = getLocalDateStr(7);
+    document.getElementById("monthFilter").addEventListener("change", render);
 
-    function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {} }
-
-    // 한글 금액 (예: 110000 -> 일십일만)
-    function toKorean(n) {
-      n = Math.floor(n);
-      if (n === 0) return "영";
-      const dig = ["","일","이","삼","사","오","육","칠","팔","구"];
-      const sub = ["","십","백","천"];
-      const big = ["","만","억","조"];
-      let out = "", g = 0;
-      while (n > 0) {
-        let chunk = n % 10000, s = "";
-        for (let i = 0; i < 4; i++) {
-          const d = Math.floor(chunk / Math.pow(10, i)) % 10;
-          if (d) s = dig[d] + sub[i] + s;
+    if (items.length === 0) {
+      items = [
+        {
+          id: "sample-1",
+          store: "성수 브런치랩 (예시)",
+          price: 38000,
+          service: "2인 브런치 + 음료 2잔",
+          deadline: getLocalDateStr(5),
+          status: "예약중",
+          memo: "네이버 예약 확정 필요",
+          isPayback: false,
+          isDeposited: false
+        },
+        {
+          id: "sample-2",
+          store: "올리브 페이백 세럼 (예시)",
+          price: 32000,
+          service: "세럼 본품 구매 후 환급",
+          deadline: getLocalDateStr(2),
+          status: "리뷰 등록",
+          memo: "영수증·리뷰 링크 제출 대기",
+          isPayback: true,
+          isDeposited: false
+        },
+        {
+          id: "sample-3",
+          store: "더마 수분크림 (예시)",
+          price: 29000,
+          service: "본품 50ml 배송형",
+          deadline: todayStr,
+          status: "완료",
+          memo: "포스팅 및 리뷰 등록 완료",
+          isPayback: false,
+          isDeposited: false
         }
-        if (s) out = s + big[g] + out;
-        n = Math.floor(n / 10000); g++;
+      ];
+      save();
+    }
+
+    function updateDraftPaybackBtn() {
+      const btn = document.getElementById("draftPaybackBtn");
+      if (draftIsPayback) {
+        btn.textContent = "페이백 체험단: 예 (클릭해 해제)";
+        btn.className = "toggle-on";
+      } else {
+        btn.textContent = "페이백 체험단: 아니오";
+        btn.className = "";
       }
-      return out;
     }
 
-    function calc() {
-      let sub = 0, vat = 0;
-      const lines = state.rows.map(r => {
-        const amt = Math.round((Number(r.qty) || 0) * (Number(r.price) || 0));
-        const tax = state.vatMode === "add" ? Math.round(amt * 0.1) : 0;
-        sub += amt; vat += tax;
-        return { amt, tax };
-      });
-      return { lines, sub, vat, total: sub + vat };
+    function toggleDraftPayback() {
+      draftIsPayback = !draftIsPayback;
+      updateDraftPaybackBtn();
     }
 
-    function dateKR(iso) {
-      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
-      return m ? `${m[1]}년 ${+m[2]}월 ${+m[3]}일` : "";
+    function showBanner(text, type = "ok") {
+      const el = document.getElementById("msgBanner");
+      el.textContent = text;
+      el.className = `msg-banner ${type}`;
     }
 
-    /* ---------- 입력 폼 ---------- */
-    function syncInputs() {
-      FIELDS.forEach(k => { const el = document.querySelector(`[data-k="${k}"]`); if (el) el.value = state[k] || ""; });
-      refreshStampUI();
-    }
-
-    document.querySelectorAll("[data-k]").forEach(el => {
-      const h = () => { state[el.dataset.k] = el.value; save(); update(); };
-      el.addEventListener("input", h); el.addEventListener("change", h);
-    });
-
-    function renderRows() {
-      $("itemRows").innerHTML = state.rows.map((r, i) => `
-        <tr>
-          <td><input type="text" value="${esc(r.name)}" placeholder="품명" oninput="updateRow(${i},'name',this.value)" /></td>
-          <td><input type="text" value="${esc(r.spec)}" placeholder="식/개/EA" oninput="updateRow(${i},'spec',this.value)" /></td>
-          <td><input type="number" min="0" step="any" value="${r.qty}" style="text-align:right;" oninput="updateRow(${i},'qty',this.value)" /></td>
-          <td><input type="number" min="0" step="any" value="${r.price}" style="text-align:right;" oninput="updateRow(${i},'price',this.value)" /></td>
-          <td class="num" id="lineTotal-${i}">0</td>
-          <td><input type="text" value="${esc(r.note)}" oninput="updateRow(${i},'note',this.value)" /></td>
-          <td><button type="button" class="danger" onclick="removeRow(${i})">삭제</button></td>
-        </tr>`).join("");
-    }
-
-    function addRow() { state.rows.push({ name: "", spec: "", qty: 1, price: 0, note: "" }); save(); renderRows(); update(); }
-    function removeRow(i) {
-      if (state.rows.length <= 1) state.rows = [{ name: "", spec: "", qty: 1, price: 0, note: "" }];
-      else state.rows.splice(i, 1);
-      save(); renderRows(); update();
-    }
-    function updateRow(i, k, v) {
-      if (!state.rows[i]) return;
-      state.rows[i][k] = (k === "qty" || k === "price") ? (Number(v) || 0) : v;
-      save(); update();
-    }
-
-    /* ---------- 직인 ---------- */
-    function refreshStampUI() {
-      const has = !!state.stamp;
-      $("stampThumb").style.display = has ? "block" : "none";
-      $("stampDel").style.display = has ? "inline-block" : "none";
-      if (has) $("stampThumb").src = state.stamp;
-    }
-    function loadStamp(e) {
-      const f = e.target.files[0]; if (!f) return;
-      const rd = new FileReader();
-      rd.onload = ev => {
-        const img = new Image();
-        img.onload = () => {
-          const s = Math.min(1, 300 / Math.max(img.width, img.height));
-          const c = document.createElement("canvas");
-          c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
-          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-          state.stamp = c.toDataURL("image/png");
-          save(); refreshStampUI(); update();
-        };
-        img.src = ev.target.result;
-      };
-      rd.readAsDataURL(f); e.target.value = "";
-    }
-    function clearStamp() { state.stamp = ""; save(); refreshStampUI(); update(); }
-
-    /* ---------- 문서 렌더링 ---------- */
-    function update() {
-      const c = calc();
-      c.lines.forEach((l, i) => { const el = $(`lineTotal-${i}`); if (el) el.textContent = won(l.amt); });
-      $("subtotalDisplay").textContent = won(c.sub) + "원";
-      $("vatDisplay").textContent = won(c.vat) + "원";
-      $("totalDisplay").textContent = won(c.total) + "원";
-
-      const total = Math.max(MIN_ROWS, state.rows.length);
-      let body = "";
-      for (let i = 0; i < total; i++) {
-        const r = state.rows[i];
-        if (r) {
-          const l = c.lines[i];
-          body += `<tr><td>${esc(r.name)}</td><td class="c">${esc(r.spec)}</td><td class="r">${r.qty ? esc(r.qty) : ""}</td><td class="r">${r.price ? won(r.price) : ""}</td><td class="r">${l.amt ? won(l.amt) : ""}</td><td class="r">${l.tax ? won(l.tax) : ""}</td><td>${esc(r.note)}</td></tr>`;
-        } else body += `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+    function save() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      } catch (e) {
+        showBanner("브라우저 저장소에 기록할 수 없습니다. 시크릿 모드나 저장 공간을 확인해 주세요.", "warn");
       }
-      const qtySum = state.rows.reduce((a, r) => a + (Number(r.qty) || 0), 0);
-      const stamp = state.stamp ? `<img class="stampimg" src="${state.stamp}" alt="">` : `<span class="stamptxt">(인)</span>`;
-
-      $("sheet").innerHTML = `
-        <div class="s-top">
-          <div class="s-no"><u>No. ${esc(state.no)}</u></div>
-          <div class="s-title"><span>견적서</span></div>
-        </div>
-        <div class="s-head">
-          <div class="s-left">
-            <div>
-              <div class="s-date">${esc(dateKR(state.quoteDate))}</div>
-              <div class="s-client"><span>${esc(state.clientName)}</span><em>귀하</em></div>
-              <div class="s-proj">${state.quoteTitle ? "건명: " + esc(state.quoteTitle) : "&nbsp;"}</div>
-            </div>
-            <div class="s-greet">아래와 같이 견적합니다.</div>
-          </div>
-          <table class="sup">
-            <colgroup><col style="width:7mm"><col style="width:20mm"><col><col style="width:11mm"><col style="width:24mm"></colgroup>
-            <tr><td class="vert" rowspan="5">공<br>급<br>자</td><td class="lb">등 록 번 호</td><td class="val" colspan="3">${esc(state.bizNo)}</td></tr>
-            <tr><td class="lb">상호(법인명)</td><td class="val">${esc(state.compName)}</td><td class="lb">성명</td><td class="val stampcell">${esc(state.ceoName)}${stamp}</td></tr>
-            <tr><td class="lb">사업장주소</td><td class="val" colspan="3">${esc(state.addr)}</td></tr>
-            <tr><td class="lb">업 태</td><td class="val">${esc(state.bizType)}</td><td class="lb">종목</td><td class="val">${esc(state.bizItem)}</td></tr>
-            <tr><td class="lb">전 화 번 호</td><td class="val" colspan="3">${esc(state.tel)}</td></tr>
-          </table>
-        </div>
-        <div class="s-total">
-          <div class="l">합 계 금 액<small>(공급가액+세액)</small></div>
-          <div class="r">일금 ${toKorean(c.total)} 원整 &nbsp;(₩ ${won(c.total)})</div>
-        </div>
-        <table class="items">
-          <colgroup><col style="width:27%"><col style="width:9%"><col style="width:8%"><col style="width:13%"><col style="width:15%"><col style="width:12%"><col style="width:16%"></colgroup>
-          <thead><tr><th>품 명</th><th>규 격</th><th>수 량</th><th>단 가</th><th>공 급 가 액</th><th>세 액</th><th>비 고</th></tr></thead>
-          <tbody>${body}
-            <tr class="sum"><td class="c">계</td><td></td><td class="r">${qtySum ? esc(qtySum) : 0}</td><td class="r">0</td><td class="r">${won(c.sub)}</td><td class="r">${won(c.vat)}</td><td></td></tr>
-          </tbody>
-        </table>
-        ${state.noteText.trim() ? `<div class="s-note"><b>비고</b>\n${esc(state.noteText)}</div>` : ""}`;
     }
 
-    /* ---------- 저장/백업 ---------- */
-    function savePNG() {
-      if (typeof html2canvas !== "function") { showBanner("PNG 저장 기능을 불러오지 못했습니다. 인터넷 연결을 확인해주세요."); return; }
-      html2canvas($("sheet"), { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
-        // PNG 네 모서리에 흰 여백을 더해 문서 테두리가 이미지 끝에 붙지 않게 한다.
-        const marginTop = 96;
-        const marginX = 72;
-        const marginBottom = 48;
-        const output = document.createElement("canvas");
-        output.width = canvas.width + marginX * 2;
-        output.height = canvas.height + marginTop + marginBottom;
-        const ctx = output.getContext("2d");
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, output.width, output.height);
-        ctx.drawImage(canvas, marginX, marginTop);
-        output.toBlob(blob => {
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(blob);
-          a.download = `견적서_${(state.clientName || "견적").replace(/[\\/:*?"<>|]/g, "")}_${state.quoteDate || todayISO()}.png`;
-          a.click();
-          showBanner("견적서 PNG를 저장했습니다.");
+    function fillSample() {
+      document.getElementById("rawNotice").value =
+        "[체험단 선정안내] 캠페인: 맑은샘 코스메틱\n제품명: 어성초 진정 크림 100ml(34,000원 상당)\n리뷰 마감일: 11월 29일까지";
+      showBanner("샘플 알림 문구를 넣었어요. [문구에서 자동 추출]을 눌러보세요.", "ok");
+    }
+
+    function stripNoiseWords(str) {
+      return str
+        .replace(/\[[^\]]*\]/g, " ")
+        .replace(/\([^)]*(?:원|만원|상당|필수|주의|참고)[^)]*\)/g, " ")
+        .replace(/^(?:캠페인\s*명?|업체\s*명?|브랜드\s*명?|상호\s*명?|매장\s*명?|제품\s*명?|상품\s*명?|메뉴\s*명?|제공\s*물품|제공\s*내역|제공\s*서비스|제공\s*혜택|제공|혜택|물품|상품|제품|메뉴|내역|내용)\s*[:：-]?\s*/i, "")
+        .replace(/(?:체험단|캠페인|당첨\s*안내|선정\s*안내|당첨|선정|모집|협찬|제공\s*안내|안내)\s*$/g, "")
+        .replace(/^[·•\-|>\s]+|[·•\-|>\s]+$/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
+
+    function extractLabeledValue(text, labels) {
+      const pattern = new RegExp(
+        `(?:${labels.join("|")})\\s*[:：\\-]?\\s*([^\\n|]+)`,
+        "i"
+      );
+      const match = text.match(pattern);
+      if (!match || !match[1]) return "";
+      // 같은 줄에 다른 레이블이 바로 이어지는 경우 그 앞에서 끊기
+      const cutAtNextLabel = match[1].split(
+        /(?=\s+(?:업체명?|상호명?|매장명?|브랜드|캠페인|제품명?|상품명?|메뉴|제공\s*물품|제공\s*내역|제공\s*서비스|제공|혜택|마감|기한|일정|금액|가격)\s*[:：])/i
+      )[0];
+      return stripNoiseWords(cutAtNextLabel);
+    }
+
+    function parseNotice() {
+      const text = document.getElementById("rawNotice").value.trim();
+      if (!text) {
+        return showBanner("먼저 알림 문구를 붙여넣어 주세요.", "warn");
+      }
+
+      // 1. 금액 추출
+      let price = "";
+      const manMatch = text.match(/(\d+(?:\.\d+)?)\s*만\s*원/);
+      const wonMatch = text.match(/(\d{1,3}(?:,\d{3})+|\d{4,})\s*원/);
+      if (manMatch) {
+        price = Math.round(parseFloat(manMatch[1]) * 10000);
+      } else if (wonMatch) {
+        price = parseInt(wonMatch[1].replace(/,/g, ""), 10);
+      }
+
+      // 2. 마감일 추출
+      let deadline = "";
+      const fullDate = text.match(/(20\d{2})[-./](\d{1,2})[-./](\d{1,2})/);
+      const krDate = text.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/);
+      const slashDate = text.match(/(?:마감|기한|등록)[^\d]{0,8}(\d{1,2})[-./](\d{1,2})/);
+
+      const baseYear = parseInt(currentYM.slice(0, 4), 10);
+      if (fullDate) {
+        deadline = `${fullDate[1]}-${fullDate[2].padStart(2, "0")}-${fullDate[3].padStart(2, "0")}`;
+      } else if (krDate) {
+        deadline = `${baseYear}-${krDate[1].padStart(2, "0")}-${krDate[2].padStart(2, "0")}`;
+      } else if (slashDate) {
+        deadline = `${baseYear}-${slashDate[1].padStart(2, "0")}-${slashDate[2].padStart(2, "0")}`;
+      }
+
+      // 3. 업체명 / 캠페인 추출
+      let store = extractLabeledValue(text, [
+        "업체\\s*명?",
+        "캠페인\\s*명?",
+        "브랜드\\s*명?",
+        "상호\\s*명?",
+        "매장\\s*명?"
+      ]);
+
+      const segments = text
+        .split(/\n+|\s*\/\s*|\s*\|\s*/)
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      if (!store) {
+        const candidateSeg = segments.find(seg => {
+          const cleaned = stripNoiseWords(seg);
+          if (!cleaned || cleaned.length < 2) return false;
+          return !/(마감|기한|등록|당첨되셨|선정되셨|입금|환급|계좌|블로그|인스타|릴스|숏츠|http|www\.)/i.test(cleaned);
         });
+        if (candidateSeg) {
+          store = stripNoiseWords(candidateSeg).slice(0, 40);
+        }
+      }
+
+      // 4. 제품명 / 제공 서비스 추출
+      let service = extractLabeledValue(text, [
+        "제품\\s*명?",
+        "상품\\s*명?",
+        "메뉴\\s*명?",
+        "제공\\s*물품",
+        "제공\\s*내역",
+        "제공\\s*서비스",
+        "제공\\s*혜택",
+        "제공",
+        "혜택",
+        "물품",
+        "서비스"
+      ]);
+
+      if (!service) {
+        const scored = segments
+          .map(seg => stripNoiseWords(seg))
+          .filter(seg =>
+            seg.length >= 2 &&
+            seg !== store &&
+            !/(마감|기한|등록|당첨되셨|선정되셨|안내|유의|주의|필수|방문|예약|링크|http|www\.)/i.test(seg)
+          )
+          .map(seg => {
+            let score = 0;
+            if (/(식사권|이용권|시식권|체험권|상품권|쿠폰|세트|본품|박스|코스|패키지|크림|세럼|에센스|로션|토너|클렌저|샴푸|트리트먼트|밀키트|케어|마사지|시술|권\b|ml|g\b|인분|개입|장\b)/i.test(seg)) {
+              score += 3;
+            }
+            if (/\d/.test(seg)) score += 1;
+            if (seg.length <= 45) score += 1;
+            return { seg, score };
+          })
+          .sort((a, b) => b.score - a.score);
+
+        if (scored[0] && scored[0].score > 0) {
+          service = scored[0].seg.slice(0, 60);
+        } else if (scored[0]) {
+          service = scored[0].seg.slice(0, 60);
+        }
+      }
+
+      if (store) store = store.slice(0, 40);
+      if (service) service = service.slice(0, 60);
+
+      if (/페이백|환급|입금\s*예정|선결제/i.test(text)) {
+        draftIsPayback = true;
+        updateDraftPaybackBtn();
+      }
+
+      if (store) document.getElementById("store").value = store;
+      if (price) document.getElementById("price").value = price;
+      if (service) document.getElementById("service").value = service;
+      if (deadline) document.getElementById("deadline").value = deadline;
+
+      showBanner(
+        `추출 결과 — 캠페인/업체: ${store || "미감지"} · 제품/서비스: ${service || "미감지"} · 금액: ${price ? Number(price).toLocaleString() + "원" : "미감지"} · 마감: ${deadline || "미감지"}`,
+        "ok"
+      );
+    }
+
+    function addItem() {
+      const store = document.getElementById("store").value.trim();
+      const priceRaw = document.getElementById("price").value;
+      const price = priceRaw === "" ? 0 : (parseInt(priceRaw, 10) || 0);
+      const service = document.getElementById("service").value.trim();
+      const deadline = document.getElementById("deadline").value;
+      const status = document.getElementById("status").value;
+      const memo = document.getElementById("memo").value.trim();
+
+      if (!store) return showBanner("업체명 / 캠페인을 입력해 주세요.", "warn");
+      if (!deadline) return showBanner("마감일을 선택해 주세요.", "warn");
+
+      items.unshift({
+        id: "exp-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+        store,
+        price,
+        service,
+        deadline,
+        status,
+        memo,
+        isPayback: draftIsPayback,
+        isDeposited: false
       });
+
+      save();
+
+      const itemYM = deadline.slice(0, 7);
+      document.getElementById("monthFilter").value = itemYM;
+
+      if (currentFilter !== "전체" && currentFilter !== status) {
+        setFilter("전체");
+      } else {
+        render();
+      }
+
+      ["rawNotice", "store", "price", "service", "memo"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+      draftIsPayback = false;
+      updateDraftPaybackBtn();
+      showBanner(`'${store}' 항목을 상황판(${itemYM})에 추가했습니다.`, "ok");
+    }
+
+    function changeStatus(id, newStatus) {
+      const target = items.find(i => i.id === id);
+      if (target) {
+        target.status = newStatus;
+        save();
+        render();
+      }
+    }
+
+    function toggleItemPayback(id) {
+      const target = items.find(i => i.id === id);
+      if (!target) return;
+      target.isPayback = !target.isPayback;
+      if (!target.isPayback) target.isDeposited = false;
+      save();
+      render();
+    }
+
+    function toggleDeposit(id) {
+      const target = items.find(i => i.id === id);
+      if (!target || !target.isPayback) return;
+      target.isDeposited = !target.isDeposited;
+      save();
+      render();
+    }
+
+    function deleteItem(id) {
+      items = items.filter(i => i.id !== id);
+      save();
+      render();
+      showBanner("항목을 삭제했습니다.", "ok");
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll(".tab").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.filter === filter);
+      });
+      render();
+    }
+
+    function getDdayInfo(deadlineStr, status) {
+      if (status === "완료") return { text: "완료됨", urgent: false };
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const target = new Date(deadlineStr + "T00:00:00");
+      if (isNaN(target.getTime())) return { text: "날짜확인", urgent: false };
+      const diff = Math.round((target - today) / 86400000);
+      if (diff < 0) return { text: `D+${Math.abs(diff)} 지남`, urgent: true };
+      if (diff === 0) return { text: "D-Day 오늘", urgent: true };
+      return { text: `D-${diff}`, urgent: diff <= 3 };
+    }
+
+    function render() {
+      const selectedMonth = document.getElementById("monthFilter").value || currentYM;
+      const monthItems = items.filter(i => (i.deadline || "").startsWith(selectedMonth));
+
+      const completedSum = monthItems
+        .filter(i => i.status === "완료")
+        .reduce((sum, i) => sum + (Number(i.price) || 0), 0);
+      const totalMonthSum = monthItems
+        .reduce((sum, i) => sum + (Number(i.price) || 0), 0);
+
+      const cReserve = monthItems.filter(i => i.status === "예약중").length;
+      const cWait = monthItems.filter(i => i.status === "물품 대기중").length;
+      const cPost = monthItems.filter(i => i.status === "포스팅").length;
+      const cReview = monthItems.filter(i => i.status === "리뷰 등록").length;
+
+      const urgent = monthItems.filter(i => {
+        if (i.status === "완료") return false;
+        return getDdayInfo(i.deadline, i.status).urgent;
+      }).length;
+
+      const unpaidPaybackCount = monthItems.filter(i => i.isPayback && !i.isDeposited).length;
+
+      document.getElementById("savedLabel").textContent = `${selectedMonth} 확정 절약액 (완료 기준)`;
+      document.getElementById("completedMoney").textContent = `${completedSum.toLocaleString()}원`;
+      document.getElementById("expectedMoney").textContent = `진행 중 포함 예정 절약액: ${totalMonthSum.toLocaleString()}원`;
+      document.getElementById("activeCount").textContent = `${cReserve + cWait + cPost + cReview}건`;
+      document.getElementById("statusBreakdown").textContent = `예약 ${cReserve} · 대기 ${cWait} · 포스팅 ${cPost} · 리뷰 ${cReview}`;
+      document.getElementById("urgentCount").textContent = `${urgent}건`;
+      document.getElementById("unpaidSub").textContent = `페이백 미입금: ${unpaidPaybackCount}건`;
+
+      const visible = monthItems
+        .filter(i => currentFilter === "전체" || i.status === currentFilter)
+        .sort((a, b) => (a.deadline || "").localeCompare(b.deadline || ""));
+
+      const listEl = document.getElementById("itemList");
+      if (visible.length === 0) {
+        listEl.innerHTML = `<div class="empty">${selectedMonth} (${currentFilter})에 해당하는 체험단 내역이 없습니다.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = visible.map(item => {
+        const dday = getDdayInfo(item.deadline, item.status);
+        const options = STATUS_ORDER.map(st =>
+          `<option value="${st}" ${item.status === st ? "selected" : ""}>${st}</option>`
+        ).join("");
+        const safeId = encodeURIComponent(item.id);
+
+        const paybackBadges = item.isPayback
+          ? `<span class="payback-badge">페이백</span>` +
+            (item.isDeposited
+              ? `<span class="deposit-ok">입금 완료</span>`
+              : `<span class="deposit-wait">입금 대기</span>`)
+          : "";
+
+        const paybackButtons = `
+          <button type="button" class="${item.isPayback ? "toggle-on" : ""}" onclick="toggleItemPayback(decodeURIComponent('${safeId}'))">
+            ${item.isPayback ? "페이백 해제" : "페이백 표시"}
+          </button>
+          ${
+            item.isPayback
+              ? `<button type="button" class="${item.isDeposited ? "paid-on" : "unpaid-btn"}" onclick="toggleDeposit(decodeURIComponent('${safeId}'))">
+                   ${item.isDeposited ? "입금됨 ✓" : "입금 체크"}
+                 </button>`
+              : ""
+          }
+        `;
+
+        return `
+          <div class="item-card">
+            <div class="item-main">
+              <div class="item-top">
+                <span class="badge st-${escapeHtml(item.status)}">${escapeHtml(item.status)}</span>
+                ${paybackBadges}
+                <span class="dday ${dday.urgent ? "urgent" : ""}">${escapeHtml(dday.text)}</span>
+                <span class="store-name">${escapeHtml(item.store)}</span>
+              </div>
+              <div class="service-desc">제공: ${escapeHtml(item.service || "미입력")}</div>
+              <div class="meta">마감일: ${escapeHtml(item.deadline)}${item.memo ? " · " + escapeHtml(item.memo) : ""}</div>
+            </div>
+            <div class="item-actions">
+              <span class="price-tag">${(Number(item.price) || 0).toLocaleString()}원</span>
+              ${paybackButtons}
+              <select aria-label="상태 변경" onchange="changeStatus(decodeURIComponent('${safeId}'), this.value)" style="width:auto;">
+                ${options}
+              </select>
+              <button type="button" class="danger" onclick="deleteItem(decodeURIComponent('${safeId}'))">삭제</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
     }
 
     function exportJSON() {
-      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(items, null, 2)], { type: "application/json" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `견적서백업_${todayISO()}.json`;
+      a.download = `체험단백업_${getLocalDateStr(0)}.json`;
       a.click();
-      showBanner("JSON 백업 파일을 내려받았습니다.");
     }
 
-    function importJSON(e) {
-      const file = e.target.files[0]; if (!file) return;
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
       const reader = new FileReader();
-      reader.onload = ev => {
+      reader.onload = e => {
         try {
-          const p = JSON.parse(ev.target.result);
-          if (!p || !Array.isArray(p.rows)) throw new Error();
-          state = { ...state, ...p, rows: normalizeRows(p.rows) };
-          if (!state.compName && p.senderName) state.compName = p.senderName;
-          save(); syncInputs(); renderRows(); update();
-          showBanner("견적서 데이터를 복원했습니다.");
-        } catch { showBanner("올바른 견적서 JSON 파일이 아닙니다."); }
+          const parsed = JSON.parse(e.target.result);
+          if (!Array.isArray(parsed)) throw new Error();
+          items = parsed;
+          save();
+          render();
+          showBanner("백업 데이터를 복원했습니다.", "ok");
+        } catch {
+          showBanner("올바른 JSON 백업 파일이 아닙니다.", "warn");
+        }
       };
-      reader.readAsText(file); e.target.value = "";
+      reader.readAsText(file);
     }
 
-    syncInputs(); renderRows(); update();
+    render();
   </script>
-
   <script>
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
-  </script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
 </body>
 </html>
